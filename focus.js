@@ -74,7 +74,7 @@
   // On a video page (html.zc-watch) everything under the player is marked by sweep() and hidden;
   // leaving the video page drops the class, so the same blocks show again elsewhere.
   if (cfg.only) css += "html.zc-watch [data-zc-under] { display: none !important; }\n";
-  if (YT && cfg.only) css += "ytm-engagement-panel-section-list-renderer[panel-target-id*=comment], .ytp-ce-element, .ytp-endscreen-content, .ytp-autonav-endscreen, .ytm-autonav-bar, ytm-autonav-toggle-button-container { display: none !important; }\n";
+  if (YT && cfg.only) css += "html.zc-watch ytm-related-chip-cloud-renderer, ytm-engagement-panel-section-list-renderer[panel-target-id*=comment], .ytp-ce-element, .ytp-endscreen-content, .ytp-autonav-endscreen, .ytm-autonav-bar, ytm-autonav-toggle-button-container { display: none !important; }\n";
   var style = document.createElement("style");
   style.textContent = css;
   // At the very start the page may have no elements yet; then the styles go in with the first sweep.
@@ -193,9 +193,21 @@
     "bottom-sheet-container, ytm-bottom-sheet-renderer, ytm-menu-popup-renderer, tp-yt-paper-dialog, " +
     "ytm-engagement-panel, ytm-engagement-panel-section-list-renderer:not([panel-target-id*=comment]), " +
     "[class*=bottom-sheet], [class*=BottomSheet], [class*=ModalRoot], [class*=PopoutRoot]";
+  // A recommended video's own ⋮ menu is a bottom sheet too, but it doesn't keep its card.
+  var CARD = "ytm-media-item, ytm-video-with-context-renderer, ytm-compact-video-renderer, " +
+    "ytm-rich-item-renderer, ytm-reel-item-renderer, ytm-compact-playlist-renderer, " +
+    "ytm-compact-radio-renderer, ytm-compact-channel-renderer, ytm-playlist-video-renderer";
+  function cardMenu(el) {
+    return el.matches(".media-item-menu") || !!el.closest(CARD);
+  }
+  function holdsOpen(el) {
+    var found = el.querySelectorAll(OPEN);
+    for (var i = 0; i < found.length; i++) if (!cardMenu(found[i])) return true;
+    return false;
+  }
   function mark(el) {
-    if (el === notice || /^(SCRIPT|STYLE|LINK)$/.test(el.tagName) || el.matches(OPEN)) return;
-    if (el.querySelector(OPEN)) {
+    if (el === notice || /^(SCRIPT|STYLE|LINK)$/.test(el.tagName) || (el.matches(OPEN) && !cardMenu(el))) return;
+    if (holdsOpen(el)) {
       el.removeAttribute("data-zc-under");
       for (var i = 0; i < el.children.length; i++) mark(el.children[i]);
       return;
