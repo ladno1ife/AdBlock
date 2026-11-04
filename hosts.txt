@@ -35,3 +35,6 @@ imasdk.googleapis.com
 pagead2.googlesyndication.com
 # Rotating banner / popunder networks (random-looking domains, change often)
 piwelefko.win
+tsyndicate.com
+digitalcaramel.com
+kdmttk.com
