@@ -1,0 +1,35 @@
+# Ad and tracking hosts the in-app browser doesn't load (a host blocks its subdomains too).
+# Video ads on VK come from separate ad servers through VAST; without them the player goes straight to the video.
+
+# VK / Mail.ru ad network
+ad.mail.ru
+r.mradx.net
+ads.vk.com
+ad.vk.com
+top-fwz1.mail.ru
+rs.mail.ru
+an.mail.ru
+# Yandex ads and counters
+an.yandex.ru
+yandexadexchange.net
+adfox.ru
+ads.adfox.ru
+adfox.yandex.ru
+mc.yandex.ru
+# Russian video ad networks often served in VK
+adriver.ru
+mediasniper.ru
+buzzoola.com
+otm-r.com
+adhigh.net
+smi2.ru
+relap.io
+adwile.com
+data-ref.ru
+weborama.fr
+# Google ad network (also inside many players' VAST)
+doubleclick.net
+googlesyndication.com
+googleadservices.com
+imasdk.googleapis.com
+pagead2.googlesyndication.com
