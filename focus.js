@@ -67,9 +67,10 @@
 
   // ---- Styles that need no searching (YouTube's mobile site) ----------------------------------
   var css = "";
-  if (YT && cfg.clips) css += "ytm-reel-shelf-renderer, ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2, ytm-reel-item-renderer, [tab-identifier=FEshorts] { display: none !important; }\n";
-  // The Home button in YouTube's bottom bar is a tab, not a link to "/".
-  if (YT && cfg.home) css += "[tab-identifier=FEwhat_to_watch] { display: none !important; }\n";
+  // YouTube's bottom bar: each button is a ytm-pivot-bar-item-renderer whose tab has a class
+  // naming it: pivot-w2w (Home, "what to watch"), pivot-shorts, pivot-subs, pivot-you.
+  if (YT && cfg.clips) css += "ytm-reel-shelf-renderer, ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2, ytm-reel-item-renderer, [tab-identifier=FEshorts], ytm-pivot-bar-item-renderer:has(.pivot-shorts) { display: none !important; }\n";
+  if (YT && cfg.home) css += "[tab-identifier=FEwhat_to_watch], ytm-pivot-bar-item-renderer:has(.pivot-w2w) { display: none !important; }\n";
   // On a video page (html.zc-watch) everything under the player is marked by sweep() and hidden;
   // leaving the video page drops the class, so the same blocks show again elsewhere.
   if (cfg.only) css += "html.zc-watch [data-zc-under] { display: none !important; }\n";
@@ -224,7 +225,7 @@
       document.querySelectorAll(SHORT_LINK).forEach(function (a) { hide(cardOf(a)); });
       // A "Shorts" / "Клипы" label in a menu is that menu's button, not a shelf heading.
       headings(SHELF_TITLES).forEach(function (h) { hide(inNav(h) ? navItem(h) : blockOf(h)); });
-      if (YT) document.querySelectorAll("[tab-identifier=FEshorts]").forEach(function (t) { hide(navItem(t)); });
+      if (YT) document.querySelectorAll("[tab-identifier=FEshorts], .pivot-shorts").forEach(function (t) { hide(navItem(t)); });
     }
     if (cfg.home) {
       // The Home item in the site's menus.
@@ -232,7 +233,7 @@
         if ((a.textContent || "").trim().match(/^(главная|home)$/i)) hide(a.closest("li, ytm-pivot-bar-item-renderer") || a);
       });
       if (YT) document.querySelectorAll("ytm-pivot-bar-item-renderer").forEach(function (item) {
-        if (item.querySelector("[tab-identifier=FEwhat_to_watch], .pivot-home, [class*=pivot-home]")) hide(item);
+        if (item.querySelector(".pivot-w2w, [tab-identifier=FEwhat_to_watch], .pivot-home, [class*=pivot-home]")) hide(item);
       });
     }
     document.documentElement.classList.toggle("zc-watch", cfg.only && onWatchPage());
