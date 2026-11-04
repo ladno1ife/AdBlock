@@ -37,9 +37,39 @@
     : "li, article, [class*=Card], [class*=card], [class*=item], [class*=Item]";
   var SHELF_TITLES = YT ? /^(shorts)$/i : /^(клипы|clips)$/i;
 
+  // The site's menus and tab bars. Clips / Shorts / Home are removed from them one button at a
+  // time: a label or link found there must never take the whole bar (or, climbing up from it,
+  // the whole page) with it.
+  var NAV = "nav, [role=navigation], [role=tablist], ytm-pivot-bar-renderer, ytm-mobile-topbar-renderer, " +
+    "header, [class*=Tabbar], [class*=tabbar], [class*=TabBar], [class*=BottomNav], [class*=bottom-nav]";
+
+  function inNav(el) {
+    if (el.closest(NAV)) return true;
+    // Bars stuck to the screen edge are menus too, whatever their markup.
+    for (var n = el; n && n !== document.body; n = n.parentElement) {
+      var pos = getComputedStyle(n).position;
+      if (pos === "fixed" || pos === "sticky") return true;
+    }
+    return false;
+  }
+  // A menu's button: YouTube's whole bar item (not just the tab inside it), else the nearest item.
+  function navItem(el) {
+    return el.closest("ytm-pivot-bar-item-renderer") || el.closest("[role=tab], li, a") || el;
+  }
+  // Too big to be a shelf or a card: the page, the app, a menu, or anything with the player.
+  function tooBig(node) {
+    if (!node || node === document.body || node === document.documentElement) return true;
+    if (/^(YTM-APP|MAIN)$/.test(node.tagName) || node.id === "app") return true;
+    if (node.matches(NAV) || node.querySelector(NAV)) return true;
+    if (node.querySelector("video, ytm-player, #player")) return true;
+    return node.getBoundingClientRect().height > window.innerHeight * 0.9;
+  }
+
   // ---- Styles that need no searching (YouTube's mobile site) ----------------------------------
   var css = "";
   if (YT && cfg.clips) css += "ytm-reel-shelf-renderer, ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2, ytm-reel-item-renderer, [tab-identifier=FEshorts] { display: none !important; }\n";
+  // The Home button in YouTube's bottom bar is a tab, not a link to "/".
+  if (YT && cfg.home) css += "[tab-identifier=FEwhat_to_watch] { display: none !important; }\n";
   // On a video page (html.zc-watch) everything under the player is marked by sweep() and hidden;
   // leaving the video page drops the class, so the same blocks show again elsewhere.
   if (cfg.only) css += "html.zc-watch [data-zc-under] { display: none !important; }\n";
@@ -92,13 +122,33 @@
   }
 
   // The block a heading names: climb from the heading until the block holds more than it.
+  // Whether [parent] holds more than the shelf [node] is in: other posts, videos, links.
+  function holdsOtherContent(parent, node) {
+    for (var c = parent.firstElementChild; c; c = c.nextElementSibling) {
+      if (c === node || c.contains(node)) continue;
+      if (c.matches(SHORT_LINK) || c.querySelector(SHORT_LINK)) continue; // the shelf's own clips
+      if ((c.textContent || "").trim().length > 30 || c.matches("a[href], video, img") ||
+          c.querySelector("a[href], video, img")) return true;
+    }
+    return false;
+  }
+  // The shelf a "Клипы" / "Shorts" heading names. Never climbs into a block that is too big
+  // (see tooBig) or holds other content next to the shelf: then the block found so far goes.
   function blockOf(heading) {
     var node = heading;
-    for (var i = 0; i < 6 && node.parentElement && node.parentElement !== document.body; i++) {
-      node = node.parentElement;
+    for (var i = 0; i < 6; i++) {
+      var parent = node.parentElement;
+      if (tooBig(parent) || holdsOtherContent(parent, node)) break;
+      node = parent;
       if (node.children.length > 1 && (node.textContent || "").length > (heading.textContent || "").length + 20) return node;
     }
     return node;
+  }
+  // The card around a Clips / Shorts link; in a menu only its button, never a whole list.
+  function cardOf(link) {
+    if (inNav(link)) return navItem(link);
+    var card = link.closest(CARD);
+    return card && !tooBig(card) ? card : link;
   }
   function headings(re) {
     var found = [];
@@ -171,8 +221,10 @@
   function sweep() {
     addStyle();
     if (cfg.clips) {
-      document.querySelectorAll(SHORT_LINK).forEach(function (a) { hide(a.closest(CARD) || a); });
-      headings(SHELF_TITLES).forEach(function (h) { hide(blockOf(h)); });
+      document.querySelectorAll(SHORT_LINK).forEach(function (a) { hide(cardOf(a)); });
+      // A "Shorts" / "Клипы" label in a menu is that menu's button, not a shelf heading.
+      headings(SHELF_TITLES).forEach(function (h) { hide(inNav(h) ? navItem(h) : blockOf(h)); });
+      if (YT) document.querySelectorAll("[tab-identifier=FEshorts]").forEach(function (t) { hide(navItem(t)); });
     }
     if (cfg.home) {
       // The Home item in the site's menus.
@@ -180,7 +232,7 @@
         if ((a.textContent || "").trim().match(/^(главная|home)$/i)) hide(a.closest("li, ytm-pivot-bar-item-renderer") || a);
       });
       if (YT) document.querySelectorAll("ytm-pivot-bar-item-renderer").forEach(function (item) {
-        if (item.querySelector(".pivot-home, [class*=pivot-home]")) hide(item);
+        if (item.querySelector("[tab-identifier=FEwhat_to_watch], .pivot-home, [class*=pivot-home]")) hide(item);
       });
     }
     document.documentElement.classList.toggle("zc-watch", cfg.only && onWatchPage());
