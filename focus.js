@@ -74,6 +74,9 @@
   // On a video page (html.zc-watch) everything under the player is marked by sweep() and hidden;
   // leaving the video page drops the class, so the same blocks show again elsewhere.
   if (cfg.only) css += "html.zc-watch [data-zc-under] { display: none !important; }\n";
+  // VK's playlist bar stuck to the bottom ("Далее: … · 1/468").
+  if (!YT && cfg.only) css += "html.zc-watch [data-testid=playlist_modal_snackbar], html.zc-watch [class*=PlaylistSnackbar], " +
+    "html.zc-watch .vkuiFixedLayout__host:has([data-testid=playlist_modal_snackbar], [class*=PlaylistSnackbar]) { display: none !important; }\n";
   if (YT && cfg.only) css += "html.zc-watch ytm-related-chip-cloud-renderer, ytm-engagement-panel-section-list-renderer[panel-target-id*=comment], .ytp-ce-element, .ytp-endscreen-content, .ytp-autonav-endscreen, .ytm-autonav-bar, ytm-autonav-toggle-button-container { display: none !important; }\n";
   var style = document.createElement("style");
   style.textContent = css;
