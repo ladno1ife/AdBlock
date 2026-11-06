@@ -22,6 +22,8 @@
     return "/video/subscriptions";
   }
   function isHome(path) {
+    // The home address can hold other pages: VK Video's search is /?action=search.
+    if (/[?&](action|q|z|search_query)=/.test(location.search + location.hash.replace(/^#/, "&"))) return false;
     if (YT) return path === "/" || path === "";
     if (VKVIDEO) return path === "/" || path === "";
     return path === "/video" || path === "/video/";
